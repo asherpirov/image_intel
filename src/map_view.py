@@ -17,10 +17,45 @@ import folium
 
 
 def sort_by_time(arr):
-    pass
+
+    return arr.sort(key=lambda x: x['datetime'])
 
 
 def create_map(images_data):
+    gps_images = [img for img in images_data if img["has_gps"]]
+
+    if not gps_images:
+        return "<h2>No GPS data found</h2>"
+    sort_by_time(gps_images)
+    center_lat = sum(img["latitude"] for img in gps_images) / len(gps_images)
+    center_lon = sum(img["longitude"] for img in gps_images) / len(gps_images)
+
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
+
+    for img in gps_images:
+        #במידה ויש מפתח שאין בו ערך
+        filename = img.get("filename", "Unknown File")
+        dt = img.get("datetime", "Date Unknown")
+        model = img.get("camera_model", "Generic Device")
+        popup_content = f"<b>File:</b> {filename}<br><b>Time:</b> {dt}<br><b>Device:</b> {model}"
+
+        folium.Marker(
+            location=[img["latitude"], img["longitude"]],
+            popup= popup_content,
+            ).add_to(m)
+    # מתיחת קווים
+    path_coords = [[img["latitude"], img["longitude"]] for img in gps_images]
+    folium.PolyLine(path_coords, color="blue", weight=2, opacity=0.8).add_to(m)
+
+
+    return m._repr_html_()
+
+
+
+
+
+
+
     """
     יוצר מפה אינטראקטיבית עם כל המיקומים.
 
@@ -44,7 +79,7 @@ if __name__ == "__main__":
          "has_gps": True, "camera_make": "Apple", "camera_model": "iPhone 15 Pro",
          "datetime": "2025-01-13 09:00:00"},
     ]
-    html = create_map(fake_data)
-    with open("test_map.html", "w", encoding="utf-8") as f:
-        f.write(html)
+html = create_map(fake_data)
+with open("test_map.html", "w", encoding="utf-8") as f:
+    f.write(html)
     print("Map saved to test_map.html")
