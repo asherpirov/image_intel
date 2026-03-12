@@ -14,15 +14,27 @@ map_view.py - יצירת מפה אינטראקטיבית
 """
 import folium
 
+
+def get_clean_gps_data(raw_images_data):
+    """
+    לוקחת את הרשימה הגולמית מה-Extractor ומחזירה רק מה שראוי להצגה על מפה.
+    """
+    clean_list = []
+
+    for img in raw_images_data:
+        #  והאם יש לה GPS בדיקה שהתמונה בכלל קיימת ויש לה קואורדינטות מספריות
+        if img.get("has_gps") and \
+                isinstance(img.get("latitude"), (int, float)) and \
+                isinstance(img.get("longitude"), (int, float)):
+            clean_list.append(img)
+
+        return clean_list
+
+
 #מיון הנתונים לפי זמן
 def sort_by_time(arr):
     return arr.sort(key=lambda x: x['datetime'])
-#מרכז רק את התמונות שיש GPS
-def prepare_gps_data(images_data):
-    gps_images = [img for img in images_data if img["has_gps"]]
-    if gps_images:
-        sort_by_time(gps_images)
-        return gps_images
+
 
 
 def add_map_elements(map_object,gps_images):
@@ -44,12 +56,13 @@ def add_map_elements(map_object,gps_images):
 
 
 def create_map(images_data):
-    gps_images = prepare_gps_data(images_data)
+    gps_images = get_clean_gps_data(images_data)
+
     if not gps_images:
         return "<h2>No GPS data found</h2>"
     #חישוב מרכז מפה
-    center_lat = sum(img["latitude"] for img in gps_images) / len(gps_images)
-    center_lon = sum(img["longitude"] for img in gps_images) / len(gps_images)
+    center_lat = sum([img["latitude"] for img in gps_images  ]) / len(gps_images)
+    center_lon = sum([img["longitude"] for img in gps_images ]) / len(gps_images)
 
     m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
     add_map_elements(m,gps_images)
@@ -86,7 +99,7 @@ if __name__ == "__main__":
          "datetime": "2025-01-13 09:00:00"},
     ]
 #קובץ לבדיקה
-html = create_map(fake_data)
-with open("test_map.html", "w", encoding="utf-8") as f:
-    f.write(html)
-    print("Map saved to test_map.html")
+#html = create_map(fake_data)
+#with open("test_map.html", "w", encoding="utf-8") as f:
+ #   f.write(html)
+ #   print("Map saved to test_map.html")
