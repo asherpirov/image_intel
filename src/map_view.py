@@ -15,9 +15,8 @@ map_view.py - יצירת מפה אינטראקטיבית
 
 import folium
 
-
+#מיון המתונים לפי זמן
 def sort_by_time(arr):
-
     return arr.sort(key=lambda x: x['datetime'])
 
 
@@ -79,6 +78,7 @@ if __name__ == "__main__":
          "has_gps": True, "camera_make": "Apple", "camera_model": "iPhone 15 Pro",
          "datetime": "2025-01-13 09:00:00"},
     ]
+#קובץ לבדיקה
 html = create_map(fake_data)
 with open("test_map.html", "w", encoding="utf-8") as f:
     f.write(html)
