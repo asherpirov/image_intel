@@ -12,25 +12,20 @@ map_view.py - יצירת מפה אינטראקטיבית
 5. תיקון color_index - היה מתקדם על כל תמונה במקום רק על מכשיר חדש
 6. הוספת מקרא מכשירים
 """
-
 import folium
 
-#מיון המתונים לפי זמן
+#מיון הנתונים לפי זמן
 def sort_by_time(arr):
     return arr.sort(key=lambda x: x['datetime'])
-
-
-def create_map(images_data):
+#מרכז רק את התמונות שיש GPS
+def prepare_gps_data(images_data):
     gps_images = [img for img in images_data if img["has_gps"]]
+    if gps_images:
+        sort_by_time(gps_images)
+        return gps_images
 
-    if not gps_images:
-        return "<h2>No GPS data found</h2>"
-    sort_by_time(gps_images)
-    center_lat = sum(img["latitude"] for img in gps_images) / len(gps_images)
-    center_lon = sum(img["longitude"] for img in gps_images) / len(gps_images)
 
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
-
+def add_map_elements(map_object,gps_images):
     for img in gps_images:
         #במידה ויש מפתח שאין בו ערך
         filename = img.get("filename", "Unknown File")
@@ -41,11 +36,23 @@ def create_map(images_data):
         folium.Marker(
             location=[img["latitude"], img["longitude"]],
             popup= popup_content,
-            ).add_to(m)
+            ).add_to(map_object)
     # מתיחת קווים
     path_coords = [[img["latitude"], img["longitude"]] for img in gps_images]
-    folium.PolyLine(path_coords, color="blue", weight=2, opacity=0.8).add_to(m)
+    folium.PolyLine(path_coords, color="blue", weight=2, opacity=0.8).add_to(map_object)
+    ##הערה:נשאר רק לתת צבע לכול מכשיר שונה תוכל להתחיל מכאן
 
+
+def create_map(images_data):
+    gps_images = prepare_gps_data(images_data)
+    if not gps_images:
+        return "<h2>No GPS data found</h2>"
+    #חישוב מרכז מפה
+    center_lat = sum(img["latitude"] for img in gps_images) / len(gps_images)
+    center_lon = sum(img["longitude"] for img in gps_images) / len(gps_images)
+
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
+    add_map_elements(m,gps_images)
 
     return m._repr_html_()
 
